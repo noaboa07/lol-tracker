@@ -1,16 +1,52 @@
 /* MatchHistory.css */
+
 h2 {
-    color: #333;
-  }
-  
-  ul {
-    list-style-type: none;
-    padding: 0;
-  }
-  
-  li {
-    margin: 5px 0;
-    padding: 10px;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-  }
+  color: #333;
+  text-align: center;
+}
+
+ul {
+  list-style-type: none;
+  padding: 0;
+  max-width: 600px;
+  margin: 0 auto; /* Center the list */
+}
+
+li {
+  margin: 10px 0;
+  padding: 15px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background-color: #f9f9f9; /* Light background for items */
+  display: flex; /* Align items horizontally */
+  align-items: center; /* Center align items */
+  transition: box-shadow 0.2s ease;
+}
+
+li:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Add shadow on hover */
+}
+
+.champion-icon {
+  width: 50px; /* Adjust width as needed */
+  height: 50px; /* Adjust height as needed */
+  margin-right: 15px; /* Space between image and text */
+  border: 2px solid #ddd; /* Border around the image */
+  border-radius: 50%; /* Round the image */
+}
+
+.match-info {
+  flex-grow: 1; /* Allow text to take remaining space */
+}
+
+h3 {
+  margin: 0;
+  font-size: 1.2em;
+  color: #2c3e50; /* Darker color for headings */
+}
+
+p {
+  margin: 5px 0;
+  color: #555; /* Slightly lighter text color */
+  font-size: 0.9em; /* Smaller font size for details */
+}
