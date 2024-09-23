@@ -24,33 +24,33 @@ app.get('/account/:name/:tag', async (req, res) => {
     if (error.response) {
       console.error('Error response:', error.response.data);
     }
-    res.status(500).json({ error: 'Error fetching account data', details: error.response ? error.response.data : error.message });
+    res.status(500).json({ error: 'Failed to fetch account data', details: error.response ? error.response.data : error.message });
   }
 });
 
+// Fetch match history based on PUUID
 app.get('/match-history/:puuid', async (req, res) => {
-    try {
-      const { puuid } = req.params;
-      const matchHistoryResponse = await axios.get(`https://americas.api.riotgames.com/lol/match/v5/matches/by-puuid/${puuid}/ids?start=0&count=20&api_key=${process.env.RIOT_API_KEY}`);
-      
-      // Send the response back to the client
-      res.json(matchHistoryResponse.data);
-    } catch (error) {
-      console.error('Error fetching match history:', error.message);
-      res.status(500).json({ error: 'Error fetching match history', details: error.response ? error.response.data : error.message });
-    }
-  });
+  try {
+    const { puuid } = req.params;
+    const matchHistoryResponse = await axios.get(`https://americas.api.riotgames.com/lol/match/v5/matches/by-puuid/${puuid}/ids?start=0&count=20&api_key=${process.env.RIOT_API_KEY}`);
+    res.json(matchHistoryResponse.data);
+  } catch (error) {
+    console.error('Error fetching match history:', error.message);
+    res.status(500).json({ error: 'Failed to fetch match history', details: error.response ? error.response.data : error.message });
+  }
+});
 
-  app.get('/match-details/:matchId', async (req, res) => {
-    try {
-      const { matchId } = req.params;
-      const matchDetailsResponse = await axios.get(`https://americas.api.riotgames.com/lol/match/v5/matches/${matchId}?api_key=${process.env.RIOT_API_KEY}`);
-      res.json(matchDetailsResponse.data);
-    } catch (error) {
-      console.error('Error fetching match details:', error.message);
-      res.status(500).json({ error: 'Error fetching match details', details: error.response ? error.response.data : error.message });
-    }
-  });
+// Fetch match details based on match ID
+app.get('/match-details/:matchId', async (req, res) => {
+  try {
+    const { matchId } = req.params;
+    const matchDetailsResponse = await axios.get(`https://americas.api.riotgames.com/lol/match/v5/matches/${matchId}?api_key=${process.env.RIOT_API_KEY}`);
+    res.json(matchDetailsResponse.data);
+  } catch (error) {
+    console.error('Error fetching match details:', error.message);
+    res.status(500).json({ error: 'Failed to fetch match details', details: error.response ? error.response.data : error.message });
+  }
+});
 
 // Start the server
 app.listen(PORT, () => {
