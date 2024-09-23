@@ -3,14 +3,13 @@ import axios from 'axios';
 import './MatchHistory.css';
 
 const MatchHistory = ({ puuid }) => {
-  const [matchIds, setMatchIds] = useState([]);
   const [matches, setMatches] = useState([]);
 
   useEffect(() => {
     const fetchMatchIds = async () => {
       try {
         const response = await axios.get(`/match-history/${puuid}`);
-        setMatchIds(response.data);
+        // Assuming the response data is an array of match IDs
         fetchMatchDetails(response.data);
       } catch (error) {
         console.error('Error fetching match IDs:', error);
@@ -35,8 +34,8 @@ const MatchHistory = ({ puuid }) => {
       <h2>Match History</h2>
       <ul>
         {matches.map(match => (
-          <li key={match.id}>
-            Match ID: {match.id} | Duration: {match.info.gameDuration} seconds | Winner: {match.info.teams[0].win ? 'Team 1' : 'Team 2'}
+          <li key={match.metadata.matchId}>
+            Match ID: {match.metadata.matchId} | Duration: {match.info.gameDuration} seconds | Winner: {match.info.teams[0].win ? 'Team 1' : 'Team 2'}
           </li>
         ))}
       </ul>
