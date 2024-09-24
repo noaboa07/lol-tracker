@@ -1,0 +1,46 @@
+/* SlideMenu.css */
+.slide-menu {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 50px;
+    background-color: #333;
+    transition: width 0.3s ease;
+    z-index: 1000;
+    overflow-x: hidden;
+  }
+  
+  .slide-menu.open {
+    width: 200px; /* Width when menu is open */
+  }
+  
+  .menu-content {
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+    height: 100%;
+  }
+  
+  .menu-content button {
+    background-color: #444;
+    color: white;
+    border: none;
+    margin-bottom: 10px;
+    padding: 10px;
+    text-align: left;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+  }
+  
+  .menu-content button:hover {
+    background-color: #555;
+  }
+  
+  .menu-content button:focus {
+    outline: none;
+  }
+  
+  .menu-content button:first-child {
+    margin-top: 50px; /* Adjust space for first button */
+  }

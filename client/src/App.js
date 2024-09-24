@@ -1,17 +1,24 @@
 import React from 'react';
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
-import Home from './components/Home';
-import ProfilePage from './components/ProfilePage'; // Create a profile page component
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import HomePage from './components/Home';
+import ProfilePage from './components/ProfilePage';
+import SlideMenu from './components/SlideMenu';
 
-const App = () => {
+function App() {
   return (
     <Router>
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/profile/:puuid/:name/:tag" element={<ProfilePage />} />
-      </Routes>
+      <div className="app">
+        <SlideMenu /> {/* Slide-out menu */}
+        <div className="content">
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/profile/:puuid/:name/:tag" element={<ProfilePage />} />
+            {/* Add other routes here */}
+          </Routes>
+        </div>
+      </div>
     </Router>
   );
-};
+}
 
 export default App;

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import MatchHistory from './MatchHistory';
 import axios from 'axios';
@@ -8,30 +8,27 @@ const ProfilePage = () => {
   const { puuid, name, tag } = useParams(); // Get the PUUID, name, and tag from the URL parameters
   const [summonerData, setSummonerData] = useState(null);
   const [error, setError] = useState('');
-  const [matchHistoryRefresh, setMatchHistoryRefresh] = useState(false); // State to trigger refresh
   const [lastRefreshed, setLastRefreshed] = useState(null); // State to store last refresh time
 
-  useEffect(() => {
-    const fetchSummonerData = async () => {
-      try {
-        const response = await axios.get(`/summoner/${puuid}`);
-        setSummonerData(response.data);
-      } catch (err) {
-        console.error('Error fetching summoner data:', err);
-        setError('Failed to fetch summoner data.');
-      }
-    };
-
-    if (puuid) {
-      fetchSummonerData();
+  const fetchProfileData = useCallback(async () => {
+    try {
+      // Fetch summoner data using PUUID
+      const response = await axios.get(`/summoner/${puuid}`);
+      setSummonerData(response.data);
+      setError(''); // Clear error if successful
+    } catch (err) {
+      console.error('Error fetching summoner data:', err);
+      setError('Failed to fetch summoner data.');
     }
   }, [puuid]);
 
-  const refreshMatchHistory = () => {
-    // Toggle state to trigger match history refresh
-    setMatchHistoryRefresh(prevState => !prevState);
-    // Update the last refreshed time
-    setLastRefreshed(new Date().toLocaleString());
+  useEffect(() => {
+    fetchProfileData(); // Fetch data on initial load
+  }, [fetchProfileData]);
+
+  const refreshProfile = () => {
+    fetchProfileData(); // Refresh the summoner data
+    setLastRefreshed(new Date().toLocaleString()); // Update the last refreshed time
   };
 
   return (
@@ -50,12 +47,12 @@ const ProfilePage = () => {
         </div>
       )}
 
-      <button className="refresh-button" onClick={refreshMatchHistory}>Refresh Match History</button>
+      <button className="refresh-button" onClick={refreshProfile}>Refresh Profile</button>
       <p className="last-refreshed">
         {lastRefreshed ? `Last Refreshed: ${lastRefreshed}` : 'Not refreshed yet'}
       </p>
 
-      <MatchHistory puuid={puuid} key={matchHistoryRefresh} /> {/* Pass the refresh state as a key to force rerender */}
+      <MatchHistory puuid={puuid} /> {/* Match history will fetch its data based on updated PUUID */}
     </div>
   );
 };
