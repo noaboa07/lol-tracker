@@ -70,6 +70,10 @@ const MatchHistory = ({ puuid }) => {
                       <p>{translations[language].champion}: {participant.championName}</p> {/* Translated champion */}
                       <p>{translations[language].kda}: {participant.kills}/{participant.deaths}/{participant.assists}</p> {/* Translated KDA */}
                       <p>{translations[language].gameType}: {match.info.queueId === 420 ? translations[language].ranked : translations[language].normal}</p> {/* Translated game type */}
+                      {/* New stats */}
+                      <p>{translations[language].damageDealt}: {participant.totalDamageDealtToChampions}</p> {/* Total damage dealt */}
+                      <p>{translations[language].visionScore}: {participant.visionScore}</p> {/* Vision score */}
+                      <p>{translations[language].cs}: {participant.totalMinionsKilled + participant.neutralMinionsKilled}</p> {/* CS */}
                     </div>
                   </>
                 )}

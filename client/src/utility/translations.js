@@ -27,8 +27,9 @@ const translations = {
       gameType: 'Game Type',
       ranked: 'Ranked',
       normal: 'Normal',
-      team1: 'Team 1',
-      team2: 'Team 2',
+      damageDealt: 'Damage Dealt',
+      visionScore: 'Vision Score',
+      cs: 'Creep Score (CS)',
       // SlideMenu Translations
       home: 'Home',
       slideMenuProfile: 'Profile', // Changed to avoid duplication
@@ -62,8 +63,9 @@ const translations = {
       gameType: 'Tipo de Juego',
       ranked: 'Clasificado',
       normal: 'Normal',
-      team1: 'Equipo 1',
-      team2: 'Equipo 2',
+      damageDealt: 'Daño Infligido',
+      visionScore: 'Puntuación de Visión',
+      cs: 'Puntuación de Súbditos (CS)',
       // SlideMenu Translations
       home: 'Inicio',
       slideMenuProfile: 'Perfil', // Changed to avoid duplication

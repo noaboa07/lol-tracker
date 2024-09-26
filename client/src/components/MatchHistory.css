@@ -3,27 +3,27 @@
 h2 {
   color: #333;
   text-align: center;
+  margin-bottom: 20px;
 }
 
 ul {
   list-style-type: none;
   padding: 0;
-  max-width: 600px;
-  margin: 0 auto; /* Center the list */
+  max-width: 900px;
+  margin: 0 auto;
 }
 
 li {
   margin: 10px 0;
   padding: 15px;
-  border: 1px solid #ddd;
   border-radius: 8px;
-  display: flex; /* Align items horizontally */
-  align-items: center; /* Center align items */
-  transition: box-shadow 0.2s ease, background-color 0.3s ease; /* Smooth transition for hover and background color */
+  display: flex;
+  align-items: center;
+  transition: box-shadow 0.2s ease, background-color 0.3s ease;
 }
 
 .match-item.victory {
-  background-color: #608ef3; /* Blue/green for victory */
+  background-color: #608ef3; /* Blue for victory */
   color: white;
 }
 
@@ -37,36 +37,52 @@ li:hover {
 }
 
 .champion-icon {
-  width: 50px; /* Adjust width as needed */
-  height: 50px; /* Adjust height as needed */
-  margin-right: 15px; /* Space between image and text */
-  border: 2px solid #ddd; /* Border around the image */
-  border-radius: 50%; /* Round the image */
+  width: 60px; /* Make the icon square */
+  height: 60px; /* Make the icon square */
+  margin-right: 20px;
+  border: 2px solid white; /* White border around the icon */
+  border-radius: 8px; /* Slightly rounded corners */
 }
 
 .match-info {
-  flex-grow: 1; /* Allow text to take remaining space */
+  flex-grow: 1; /* Take up the remaining space */
+  display: flex;
+  flex-direction: column;
 }
 
 .match-result {
-  font-size: 1.2em; /* Make the result text bold */
+  font-size: 1.4em;
   font-weight: bold;
-  margin-right: 15px; /* Space between result text and image */
+  margin-right: 15px;
 }
 
 h3 {
   margin: 0;
-  font-size: 1.2em;
-  color: #2c3e50; /* Darker color for headings */
+  font-size: 1.3em;
+  color: white; /* Make it consistent with background contrast */
 }
 
-p {
+.match-detail-group {
+  display: flex;
+  justify-content: space-between; /* Distribute the space between detail sections */
+  font-size: 0.9em;
+  margin-top: 5px;
+}
+
+.match-detail-group > div {
+  width: 32%;
+  color: white;
+}
+
+.match-detail-group p {
   margin: 5px 0;
-  color: #555; /* Slightly lighter text color */
-  font-size: 0.9em; /* Smaller font size for details */
 }
 
-/* Additional hover effect to make the item stand out */
+.match-info p {
+  margin: 5px 0;
+  color: white;
+}
+
 li:hover .champion-icon {
   border-color: #aaa; /* Change border color of champion icon on hover */
 }
