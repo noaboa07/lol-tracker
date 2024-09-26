@@ -1,3 +1,5 @@
+// back up incase fetchChampionData is nonfunctional
+
 const championImageMap = {
     "Aatrox": "https://ddragon.leagueoflegends.com/cdn/14.18.1/img/champion/Aatrox.png",
     "Ahri": "https://ddragon.leagueoflegends.com/cdn/14.18.1/img/champion/Ahri.png",

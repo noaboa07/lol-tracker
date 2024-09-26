@@ -17,6 +17,8 @@ const translations = {
       notRefreshed: 'Not refreshed yet',
       // MatchHistory Translations
       matchHistory: 'Match History',
+      victory: 'Victory', 
+      defeat: 'Defeat', 
       matchId: 'Match ID',
       duration: 'Duration',
       winner: 'Winner',
@@ -50,6 +52,8 @@ const translations = {
       notRefreshed: 'Aún no actualizado',
       // MatchHistory Translations
       matchHistory: 'Historial de Partidas',
+      victory: 'Victoria', 
+      defeat: 'Derrota', 
       matchId: 'ID de Partida',
       duration: 'Duración',
       winner: 'Ganador',

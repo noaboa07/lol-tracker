@@ -1,41 +1,39 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import championImageMap from '../utility/championImageMap'; // Adjust the path as needed
 import './MatchHistory.css';
 import { useLanguage } from './LanguageContext'; // Import language context
 import translations from '../utility/translations'; // Import translations
+import fetchChampionData from '../utility/fetchChampionData'; // Import dynamic fetch for champion data
 
 const MatchHistory = ({ puuid }) => {
   const [matches, setMatches] = useState([]);
   const [loading, setLoading] = useState(true); // Loading state
   const [error, setError] = useState(''); // Error state
+  const [championImageMap, setChampionImageMap] = useState({}); // State for dynamically fetched champion images
   const { language } = useLanguage(); // Get the current language
 
   useEffect(() => {
-    const fetchMatchIds = async () => {
+    const fetchChampionsAndMatches = async () => {
       try {
+        // Fetch champion images
+        const champions = await fetchChampionData();
+        setChampionImageMap(champions);
+        
+        // Fetch match IDs and match details
         const response = await axios.get(`/match-history/${puuid}`);
-        fetchMatchDetails(response.data); // Fetch match details with the retrieved IDs
-      } catch (error) {
-        console.error('Error fetching match IDs:', error);
-        setError(translations[language].fetchError); // Set error message
-      }
-    };
-
-    const fetchMatchDetails = async (ids) => {
-      const matchDetailsPromises = ids.map(id => axios.get(`/match-details/${id}`));
-      try {
+        const matchDetailsPromises = response.data.map(id => axios.get(`/match-details/${id}`));
         const matchDetailsResponses = await Promise.all(matchDetailsPromises);
+        
         setMatches(matchDetailsResponses.map(res => res.data));
       } catch (error) {
-        console.error('Error fetching match details:', error);
+        console.error('Error fetching data:', error);
         setError(translations[language].fetchError); // Set error message
       } finally {
         setLoading(false); // Set loading to false after fetching
       }
     };
 
-    fetchMatchIds();
+    fetchChampionsAndMatches();
   }, [puuid, language]);
 
   const formatDuration = (duration) => {
@@ -53,19 +51,22 @@ const MatchHistory = ({ puuid }) => {
         <ul>
           {matches.map(match => {
             const participant = match.info.participants.find(p => p.puuid === puuid);
+            const win = participant.win; // Check if the player won or lost
             return (
-              <li key={match.metadata.matchId}>
+              <li key={match.metadata.matchId} className={`match-item ${win ? 'victory' : 'defeat'}`}>
                 {participant && (
                   <>
+                    <strong className="match-result">
+                      {win ? translations[language].victory : translations[language].defeat}
+                    </strong>
                     <img 
-                      src={championImageMap[participant.championName]} // Use championName to get the image
+                      src={championImageMap[participant.championName]} // Dynamically use championName to get the image
                       alt={`${participant.championName} Icon`} // Descriptive alt text
                       className="champion-icon" 
                     />
                     <div className="match-info">
                       <h3>{translations[language].matchId}: {match.metadata.matchId}</h3> {/* Translated match ID */}
                       <p>{translations[language].duration}: {formatDuration(match.info.gameDuration)}</p> {/* Translated duration */}
-                      <p>{translations[language].winner}: {match.info.teams[0].win ? translations[language].team1 : translations[language].team2}</p> {/* Translated winner */}
                       <p>{translations[language].champion}: {participant.championName}</p> {/* Translated champion */}
                       <p>{translations[language].kda}: {participant.kills}/{participant.deaths}/{participant.assists}</p> {/* Translated KDA */}
                       <p>{translations[language].gameType}: {match.info.queueId === 420 ? translations[language].ranked : translations[language].normal}</p> {/* Translated game type */}
