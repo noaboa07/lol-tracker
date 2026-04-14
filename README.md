@@ -63,6 +63,7 @@ A few things I focused on:
 
 ### Expanded match details
 ![Expanded match card](docs/match-card-expanded.png)
+
 *Expanded match view with explainable performance reasons, 10-player breakdown, and visual team comparison.*
 
 ## Tech Stack
