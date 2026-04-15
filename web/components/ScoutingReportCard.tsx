@@ -1,29 +1,24 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export function ScoutingReportCard({ insights }: { insights: string[] }) {
+  if (insights.length === 0) return null;
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Scouting Report</CardTitle>
-        <div className="text-sm text-muted-foreground">
-          A quick read on the visible sample and the habits it suggests.
-        </div>
+        <CardTitle>Scouting read</CardTitle>
       </CardHeader>
-      <CardContent className="grid gap-2 md:grid-cols-2">
-        {insights.length === 0 ? (
-          <div className="rounded-lg border border-dashed border-border/50 bg-background/20 p-4 text-sm text-muted-foreground">
-            Not enough visible games to form a scouting report yet.
-          </div>
-        ) : (
-          insights.map((insight) => (
-            <div
+      <CardContent>
+        <ul className="grid gap-x-8 gap-y-2 sm:grid-cols-2">
+          {insights.map((insight) => (
+            <li
               key={insight}
-              className="rounded-lg border border-border/50 bg-background/20 px-3 py-2.5 text-sm"
+              className="relative pl-4 text-sm leading-snug text-muted-foreground before:absolute before:left-0 before:top-[0.55em] before:h-1 before:w-1 before:rounded-full before:bg-primary/60"
             >
               {insight}
-            </div>
-          ))
-        )}
+            </li>
+          ))}
+        </ul>
       </CardContent>
     </Card>
   );

@@ -22,7 +22,7 @@ export function ShareProfileSnapshotCard({
     `Average KDA: ${summary.averageKda.toFixed(2)}`,
     summary.bestChampion
       ? `Best recent champion: ${summary.bestChampion.championName} (${summary.bestChampion.games} games)`
-      : "Best recent champion: n/a",
+      : null,
     summary.strongestQueue ? `Best queue: ${summary.strongestQueue}` : null,
     summary.strongestRole ? `Strong role: ${summary.strongestRole}` : null,
     summary.summaryLine,
@@ -38,54 +38,50 @@ export function ShareProfileSnapshotCard({
 
   return (
     <Card id="snapshot">
-      <CardHeader className="flex-row items-center justify-between space-y-0 gap-3">
-        <div>
-          <CardTitle>Profile Snapshot</CardTitle>
-          <div className="mt-1 text-sm text-muted-foreground">
-            A compact, presentation-ready summary for sharing or screenshots.
-          </div>
-        </div>
+      <CardHeader className="flex flex-row items-start justify-between gap-3 space-y-0">
+        <CardTitle>Snapshot</CardTitle>
         <div className="flex gap-2">
           <Button variant="secondary" size="sm" onClick={copySnapshot}>
-            <Copy className="h-4 w-4" />
+            <Copy className="h-3.5 w-3.5" />
             {copied ? "Copied" : "Copy"}
           </Button>
           <Button variant="secondary" size="sm" onClick={() => window.print()}>
-            <Printer className="h-4 w-4" />
-            Print
+            <Printer className="h-3.5 w-3.5" />
           </Button>
         </div>
       </CardHeader>
       <CardContent>
-        <div className="rounded-xl border border-border/50 bg-background/20 p-4">
-          <div className="text-xl font-semibold">
+        <div className="rounded-md border border-border/60 bg-[hsl(var(--surface))] p-4">
+          <div className="text-lg font-bold">
             {profile.account.gameName}
-            <span className="text-muted-foreground">#{profile.account.tagLine}</span>
+            <span className="text-muted-foreground font-normal text-base">
+              #{profile.account.tagLine}
+            </span>
           </div>
-          <div className="mt-2 text-sm text-muted-foreground">{summary.summaryLine}</div>
-          <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            <SnapshotMetric label="Recent WR" value={`${summary.recentWinRate}%`} />
-            <SnapshotMetric label="Average KDA" value={summary.averageKda.toFixed(2)} />
-            <SnapshotMetric
-              label="Best Champion"
-              value={summary.bestChampion?.championName ?? "None"}
+          <div className="mt-1 text-sm text-muted-foreground">{summary.summaryLine}</div>
+          <dl className="mt-4 grid grid-cols-2 gap-y-2 gap-x-4">
+            <SnapshotStat label="Win rate" value={`${summary.recentWinRate}%`} />
+            <SnapshotStat label="KDA" value={summary.averageKda.toFixed(2)} />
+            <SnapshotStat
+              label="Best champ"
+              value={summary.bestChampion?.championName ?? "—"}
             />
-            <SnapshotMetric
-              label="Best Queue/Role"
-              value={summary.strongestQueue ?? summary.strongestRole ?? "Building"}
+            <SnapshotStat
+              label="Queue / Role"
+              value={summary.strongestQueue ?? summary.strongestRole ?? "—"}
             />
-          </div>
+          </dl>
         </div>
       </CardContent>
     </Card>
   );
 }
 
-function SnapshotMetric({ label, value }: { label: string; value: string }) {
+function SnapshotStat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-lg border border-border/50 bg-background/30 p-3">
-      <div className="text-[11px] uppercase tracking-wider text-muted-foreground">{label}</div>
-      <div className="mt-1 text-base font-semibold">{value}</div>
+    <div>
+      <dt className="eyebrow">{label}</dt>
+      <dd className="mt-0.5 text-sm font-semibold tabular-nums">{value}</dd>
     </div>
   );
 }

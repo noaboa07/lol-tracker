@@ -15,55 +15,54 @@ export function ChampionMasteryTrendCard({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Champion Mastery Trend</CardTitle>
-        <div className="text-sm text-muted-foreground">
-          Recent direction on the champions you are leaning on most.
-        </div>
+        <CardTitle>Mastery trend</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-2">
+      <CardContent>
         {champions.length === 0 ? (
-          <div className="rounded-lg border border-dashed border-border/50 bg-background/20 p-4 text-sm text-muted-foreground">
-            Not enough repeated champions in the current view yet.
-          </div>
+          <p className="text-sm text-muted-foreground">
+            Not enough repeated champions yet.
+          </p>
         ) : (
-          champions.map((champion) => (
-            <div
-              key={champion.championName}
-              className="flex items-center gap-3 rounded-lg border border-border/50 bg-background/20 p-3"
-            >
-              <Image
-                src={championSquareUrl(champion.championName, version)}
-                alt={champion.championName}
-                width={36}
-                height={36}
-                unoptimized
-                className="rounded-md"
-              />
-              <div className="min-w-0 flex-1">
-                <div className="text-sm font-medium">{champion.championName}</div>
-                <div className="text-xs text-muted-foreground">
-                  {champion.games} games - {champion.winRate}% WR - {champion.averageKda.toFixed(2)} KDA
-                </div>
-              </div>
-              <div
-                className={cn(
-                  "flex items-center gap-1 text-sm font-semibold",
-                  champion.direction === "up"
-                    ? "text-win"
-                    : champion.direction === "down"
-                      ? "text-loss"
-                      : "text-muted-foreground"
-                )}
+          <ul className="divide-y divide-border/40">
+            {champions.map((champion) => (
+              <li
+                key={champion.championName}
+                className="flex items-center gap-3 py-2.5 first:pt-0 last:pb-0"
               >
-                {champion.direction === "up" ? (
-                  <TrendingUp className="h-4 w-4" />
-                ) : champion.direction === "down" ? (
-                  <TrendingDown className="h-4 w-4" />
-                ) : null}
-                {champion.label}
-              </div>
-            </div>
-          ))
+                <Image
+                  src={championSquareUrl(champion.championName, version)}
+                  alt=""
+                  width={32}
+                  height={32}
+                  unoptimized
+                  className="rounded-sm shrink-0"
+                />
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-sm font-medium">{champion.championName}</div>
+                  <div className="text-xs text-muted-foreground tabular-nums">
+                    {champion.games}g · {champion.winRate}% · {champion.averageKda.toFixed(2)} KDA
+                  </div>
+                </div>
+                <div
+                  className={cn(
+                    "flex items-center gap-1 font-mono text-xs font-semibold tabular-nums shrink-0",
+                    champion.direction === "up"
+                      ? "text-win"
+                      : champion.direction === "down"
+                        ? "text-loss"
+                        : "text-muted-foreground"
+                  )}
+                >
+                  {champion.direction === "up" ? (
+                    <TrendingUp className="h-3.5 w-3.5" />
+                  ) : champion.direction === "down" ? (
+                    <TrendingDown className="h-3.5 w-3.5" />
+                  ) : null}
+                  {champion.label}
+                </div>
+              </li>
+            ))}
+          </ul>
         )}
       </CardContent>
     </Card>

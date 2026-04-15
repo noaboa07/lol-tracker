@@ -6,44 +6,40 @@ export function RolePerformanceCard({ roles }: { roles: RoleInsight[] }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Role Performance</CardTitle>
-        <div className="text-sm text-muted-foreground">
-          Recent role breakdown using Riot lane data when it is stable enough.
-        </div>
+        <CardTitle>Roles</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-2">
+      <CardContent>
         {roles.length === 0 ? (
-          <div className="rounded-lg border border-dashed border-border/50 bg-background/20 p-4 text-sm text-muted-foreground">
-            Not enough reliable role data in the current sample.
-          </div>
+          <p className="text-sm text-muted-foreground">Not enough role data yet.</p>
         ) : (
-          roles.map((role) => (
-            <div
-              key={role.role}
-              className="grid grid-cols-[1fr_auto] gap-3 rounded-lg border border-border/50 bg-background/20 p-3"
-            >
-              <div>
-                <div className="font-medium">{role.role}</div>
-                <div className="text-xs text-muted-foreground">
-                  {role.games} games
-                  {role.topChampion ? ` - ${role.topChampion}` : ""}
+          <ul className="divide-y divide-border/40">
+            {roles.map((role) => (
+              <li
+                key={role.role}
+                className="grid grid-cols-[1fr_auto] gap-3 py-2.5 first:pt-0 last:pb-0"
+              >
+                <div>
+                  <div className="text-sm font-medium">{role.role}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {role.games}g{role.topChampion ? ` · ${role.topChampion}` : ""}
+                  </div>
                 </div>
-              </div>
-              <div className="text-right">
-                <div
-                  className={cn(
-                    "font-semibold",
-                    role.winRate >= 50 ? "text-win" : "text-loss"
-                  )}
-                >
-                  {role.winRate}%
+                <div className="text-right">
+                  <div
+                    className={cn(
+                      "font-mono text-sm font-semibold tabular-nums",
+                      role.winRate >= 50 ? "text-win" : "text-loss"
+                    )}
+                  >
+                    {role.winRate}%
+                  </div>
+                  <div className="text-xs text-muted-foreground tabular-nums">
+                    {role.averageKda.toFixed(2)} · {role.averageCsPerMinute.toFixed(1)} cs/m
+                  </div>
                 </div>
-                <div className="text-xs text-muted-foreground">
-                  {role.averageKda.toFixed(2)} KDA - {role.averageCsPerMinute.toFixed(1)} CS/m
-                </div>
-              </div>
-            </div>
-          ))
+              </li>
+            ))}
+          </ul>
         )}
       </CardContent>
     </Card>

@@ -5,10 +5,26 @@ export type Badge = {
   className: string;
 };
 
+/** @deprecated Use MatchAnalysis / getMatchAnalysis instead */
 export type MatchReason = {
   tone: "good" | "bad";
   text: string;
 };
+
+/**
+ * Structured per-match coaching analysis.
+ * All signals are derived from available data only — no inferred claims.
+ */
+export interface MatchAnalysis {
+  /** Overall game rating */
+  category: "strong" | "mixed" | "weak";
+  /** What probably cost the game (1–3 items, honest about team vs individual) */
+  hurt: string[];
+  /** What held up even in a bad game, or what drove a good one (1–3 items) */
+  solid: string[];
+  /** Single most actionable coaching note */
+  coaching: string;
+}
 
 export function getMatchBadges(match: MatchDTO, me: MatchParticipant): Badge[] {
   const badges: Badge[] = [];
@@ -75,8 +91,7 @@ export function getMatchBadges(match: MatchDTO, me: MatchParticipant): Badge[] {
   if (me.win && topDamage && kda >= 4) {
     badges.push({
       label: "MVP",
-      className:
-        "bg-amber-400/20 text-amber-200 border-amber-300/50 shadow-[0_0_12px_-2px] shadow-amber-300/40",
+      className: "bg-amber-400/15 text-amber-200 border-amber-400/40",
     });
   }
 
@@ -124,7 +139,7 @@ export function getMatchBadges(match: MatchDTO, me: MatchParticipant): Badge[] {
 
   if (objectiveScore >= maxObjectives * 0.75 && objectiveScore > 0) {
     badges.push({
-      label: "OBJECTIVE FOCUSED",
+      label: "OBJ FOCUSED",
       className: "bg-indigo-500/15 text-indigo-200 border-indigo-400/40",
     });
   }
@@ -138,7 +153,7 @@ export function getMatchBadges(match: MatchDTO, me: MatchParticipant): Badge[] {
 
   if (me.visionScore >= maxVision * 0.85 && me.visionScore >= 20) {
     badges.push({
-      label: "VISION EDGE",
+      label: "VISION",
       className: "bg-teal-500/15 text-teal-200 border-teal-400/40",
     });
   }
@@ -155,75 +170,234 @@ export function damageShareForTeam(participants: MatchParticipant[]) {
     Math.round(((p.totalDamageDealtToChampions ?? 0) / max) * 100);
 }
 
-export function getMatchPerformanceReasons(
-  match: MatchDTO,
-  me: MatchParticipant
-): MatchReason[] {
-  const team = match.info.participants.filter((participant) => participant.teamId === me.teamId);
-  const teamKills = team.reduce((sum, participant) => sum + participant.kills, 0);
-  const teamDamage = team.reduce(
-    (sum, participant) => sum + (participant.totalDamageDealtToChampions ?? 0),
-    0
-  );
-  const teamVision = team.reduce((sum, participant) => sum + (participant.visionScore ?? 0), 0);
-  const csPerMinute =
-    (me.totalMinionsKilled + (me.neutralMinionsKilled ?? 0)) /
-    Math.max(match.info.gameDuration / 60, 1);
-  const killParticipation =
-    teamKills > 0 ? (me.kills + me.assists) / teamKills : 0;
-  const damageShare =
-    teamDamage > 0 ? me.totalDamageDealtToChampions / teamDamage : 0;
+/**
+ * Richer, structured match analysis.
+ *
+ * Design principles:
+ * - Role-aware: CS benchmarks differ for carries vs support; vision expectations differ.
+ * - Mode-aware: skip farm/position checks for ARAM.
+ * - Honest about team vs individual: if individual stats are solid but the team lost, say so.
+ * - Deterministic: every output is derived from measured stats, no invented claims.
+ * - Conservative: when data is insufficient, stay silent rather than hallucinate patterns.
+ */
+export function getMatchAnalysis(match: MatchDTO, me: MatchParticipant): MatchAnalysis {
+  const team = match.info.participants.filter((p) => p.teamId === me.teamId);
+  const gameMins = Math.max(match.info.gameDuration / 60, 1);
+
+  const teamKills = team.reduce((s, p) => s + p.kills, 0);
+  const teamDamage = team.reduce((s, p) => s + (p.totalDamageDealtToChampions ?? 0), 0);
+  const teamVision = team.reduce((s, p) => s + (p.visionScore ?? 0), 0);
+
+  const cs = me.totalMinionsKilled + (me.neutralMinionsKilled ?? 0);
+  const cspm = cs / gameMins;
+  const kp = teamKills > 0 ? (me.kills + me.assists) / teamKills : 0;
+  const dmgShare = teamDamage > 0 ? (me.totalDamageDealtToChampions ?? 0) / teamDamage : 0;
   const visionShare = teamVision > 0 ? (me.visionScore ?? 0) / teamVision : 0;
-  const objectiveScore =
+  const objScore =
     (me.damageDealtToObjectives ?? 0) +
     (me.turretKills ?? 0) * 1000 +
     (me.inhibitorKills ?? 0) * 2000;
   const kda =
     me.deaths === 0 ? me.kills + me.assists : (me.kills + me.assists) / me.deaths;
 
-  const reasons: MatchReason[] = [];
+  const isAram = match.info.queueId === 450 || match.info.gameMode === "ARAM";
+  const pos = (me.teamPosition ?? "").toUpperCase();
+  const isCarry = ["BOTTOM", "MIDDLE", "TOP"].includes(pos);
+  const isJungle = pos === "JUNGLE";
+  const isSupport = pos === "UTILITY";
+  const isShortGame = gameMins < 20;
 
-  if (damageShare >= 0.3 && kda >= 3) {
-    reasons.push({ tone: "good", text: "High damage share and strong KDA." });
-  }
-  if (killParticipation >= 0.65) {
-    reasons.push({ tone: "good", text: "High kill participation kept you in the action." });
-  }
-  if (me.deaths <= 3 && (me.kills + me.assists) >= 8) {
-    reasons.push({ tone: "good", text: "Low deaths helped preserve tempo." });
-  }
-  if (objectiveScore >= 4000) {
-    reasons.push({ tone: "good", text: "Strong objective pressure added map value." });
-  }
-  if (csPerMinute >= 7.5) {
-    reasons.push({ tone: "good", text: "Strong farming for game length." });
-  }
-  if (visionShare >= 0.24 && me.visionScore >= 18) {
-    reasons.push({ tone: "good", text: "Solid vision contribution supported the team." });
-  }
+  const hurt: string[] = [];
+  const solid: string[] = [];
 
-  if (me.deaths >= 7) {
-    reasons.push({ tone: "bad", text: "High deaths made it harder to hold tempo." });
-  }
-  if (csPerMinute <= 5 && match.info.gameDuration >= 22 * 60) {
-    reasons.push({ tone: "bad", text: "Low CS for game length limited scaling." });
-  }
-  if (killParticipation <= 0.4 && teamKills >= 10) {
-    reasons.push({ tone: "bad", text: "Low kill participation reduced teamfight impact." });
-  }
-  if (visionShare <= 0.12 && me.visionScore <= 12) {
-    reasons.push({ tone: "bad", text: "Weak vision contribution left less map control." });
-  }
-  if (match.info.gameDuration >= 35 * 60 && !me.win && kda < 2.5) {
-    reasons.push({ tone: "bad", text: "Fell behind in a long game." });
+  // ── HURT signals ─────────────────────────────────────────────────────────
+
+  // Deaths — most impactful signal; tier by severity
+  if (me.deaths >= 10) {
+    hurt.push(
+      `${me.deaths} deaths — that many feeding opportunities rarely go unpunished`
+    );
+  } else if (me.deaths >= 8) {
+    hurt.push(`${me.deaths} deaths disrupted your team's ability to hold any lead`);
+  } else if (me.deaths >= 6) {
+    hurt.push(`${me.deaths} deaths made it harder to hold momentum mid-game`);
+  } else if (me.deaths >= 5 && kda < 1.5) {
+    hurt.push(
+      `${me.deaths} deaths at ${kda.toFixed(1)} KDA — dying without converting kept you behind`
+    );
   }
 
-  const preferredTone: MatchReason["tone"] = me.win ? "good" : "bad";
-  const filtered = reasons
-    .sort((a, b) => Number(a.tone !== preferredTone) - Number(b.tone !== preferredTone))
-    .filter((reason, index, list) => list.findIndex((candidate) => candidate.text === reason.text) === index);
+  // CS / farm (skip ARAM, skip very short games)
+  if (!isAram && !isShortGame) {
+    if (isCarry && cspm < 5.0 && gameMins >= 22) {
+      hurt.push(
+        `${cspm.toFixed(1)} CS/min is below the carry-role minimum — gold income was limited`
+      );
+    } else if (!isSupport && cspm < 3.8 && gameMins >= 24) {
+      hurt.push(`${cspm.toFixed(1)} CS/min limited your gold lead this game`);
+    }
+  }
 
-  return filtered.slice(0, 4);
+  // Kill participation — only call it out when the team was active and you weren't
+  if (kp < 0.30 && teamKills >= 10) {
+    hurt.push(
+      `${Math.round(kp * 100)}% kill participation in a ${teamKills}-kill game — you were often away from key fights`
+    );
+  } else if (kp < 0.40 && teamKills >= 15) {
+    hurt.push(
+      `${Math.round(kp * 100)}% kill participation in a high-kill game — fights were happening without you`
+    );
+  }
+
+  // Vision — contextual thresholds by role
+  if (!isAram && !isShortGame) {
+    if (isSupport && (me.visionScore ?? 0) < 14 && gameMins >= 22) {
+      hurt.push(
+        `${me.visionScore} vision score as Support is low — ward coverage likely fell short`
+      );
+    } else if (!isSupport && (me.visionScore ?? 0) < 7 && visionShare < 0.10) {
+      hurt.push(
+        `Vision score of ${me.visionScore} — your team had minimal map info from you`
+      );
+    }
+  }
+
+  // Damage (carries only, and only when it's clearly weak, not just average)
+  if (!isAram && isCarry && dmgShare < 0.14 && teamKills >= 6 && !me.win) {
+    hurt.push(
+      `${Math.round(dmgShare * 100)}% of team damage from a carry position is very low — damage output needs to improve`
+    );
+  }
+
+  // ── SOLID signals ─────────────────────────────────────────────────────────
+
+  // Strong survival / KDA
+  if (me.deaths <= 1 && (me.kills + me.assists) >= 5) {
+    solid.push(
+      `Excellent survival — ${me.kills}/${me.deaths}/${me.assists} with near-zero deaths`
+    );
+  } else if (kda >= 4 && me.deaths <= 3) {
+    solid.push(
+      `Very clean ${kda.toFixed(1)} KDA — high impact with controlled deaths`
+    );
+  } else if (kda >= 2.5 && me.deaths <= 4 && (me.kills + me.assists) >= 8) {
+    solid.push(`Solid ${kda.toFixed(1)} KDA with good kill involvement`);
+  }
+
+  // Damage output
+  if (dmgShare >= 0.30) {
+    solid.push(
+      `Led team damage at ${Math.round(dmgShare * 100)}% of total — carried the output`
+    );
+  } else if (dmgShare >= 0.24 && isCarry) {
+    solid.push(
+      `${Math.round(dmgShare * 100)}% damage share is strong for a carry role`
+    );
+  }
+
+  // Farm
+  if (!isAram) {
+    if (cspm >= 8.0) {
+      solid.push(`Excellent farming — ${cspm.toFixed(1)} CS/min`);
+    } else if (cspm >= 6.5 && isCarry) {
+      solid.push(`Consistent farm rate — ${cspm.toFixed(1)} CS/min for a carry`);
+    }
+  }
+
+  // Kill participation
+  if (kp >= 0.72) {
+    solid.push(
+      `${Math.round(kp * 100)}% kill participation — you were present for nearly every fight`
+    );
+  } else if (kp >= 0.55 && (isSupport || isJungle)) {
+    solid.push(
+      `Strong kill participation (${Math.round(kp * 100)}%) — good map engagement`
+    );
+  }
+
+  // Vision
+  if (!isAram) {
+    if ((me.visionScore ?? 0) >= 28) {
+      solid.push(`High vision score (${me.visionScore}) — strong map control`);
+    } else if (isSupport && (me.visionScore ?? 0) >= 22) {
+      solid.push(`Good ward coverage (${me.visionScore} vision score) as Support`);
+    }
+  }
+
+  // Objectives
+  if (objScore >= 6000) {
+    solid.push(
+      "Strong objective pressure — turret and major objective contribution added real map value"
+    );
+  }
+
+  // Individually fine in a team loss
+  const individuallyFine =
+    hurt.length === 0 && !me.win && (kda >= 2 || dmgShare >= 0.20 || kp >= 0.50);
+
+  if (individuallyFine && solid.length === 0) {
+    solid.push("Individual stats were reasonable — the loss came from team-side factors");
+  }
+
+  // ── COACHING note ────────────────────────────────────────────────────────
+  // One sentence. Most actionable fix based on the primary weakness.
+
+  let coaching = "";
+
+  if (me.deaths >= 9) {
+    coaching = isJungle
+      ? "Track the enemy jungler before entering their half — reducing deaths here has the highest leverage."
+      : "Safe positioning mid-game is the biggest lever. Two fewer deaths per game compounds into a noticeably better win rate.";
+  } else if (me.deaths >= 6 && !me.win) {
+    coaching = "You died at a pace that's hard to overcome — identify one recurring death pattern (dive, over-extension, poor recall timing) and cut it.";
+  } else if (!isAram && isCarry && cspm < 5.0 && gameMins >= 22) {
+    coaching = "Farm discipline between fights is the clearest skill gap — aim for 6+ CS/min by prioritizing wave state over early roams.";
+  } else if (kp < 0.35 && teamKills >= 12) {
+    coaching = "You were often off the map when fights broke out — track your jungler or follow up after lane trades to stay in the action.";
+  } else if (!isAram && (me.visionScore ?? 0) < 8 && gameMins >= 24) {
+    coaching = "Add one control ward per back and ward before objectives — the vision deficit likely created the bad situations this game.";
+  } else if (!isAram && isSupport && (me.visionScore ?? 0) < 14) {
+    coaching = "Vision as Support is foundational — ward on every recall and keep river/objective vision up before the timer hits.";
+  } else if (individuallyFine) {
+    coaching = "Individual performance looked solid. The bigger lever is converting leads into objective control earlier — prioritize Dragon and Rift timers.";
+  } else if (me.win && hurt.length === 0 && solid.length >= 2) {
+    coaching = "Clean game — maintain this discipline on deaths, farm, and damage output.";
+  } else if (me.win && hurt.length > 0) {
+    coaching = "The win is good, but there are gaps to close. Address the weak points above to play from ahead more reliably.";
+  } else {
+    coaching = "Limit unnecessary deaths and keep farm consistent in the mid-game — these two habits have the highest leverage.";
+  }
+
+  // ── Category ─────────────────────────────────────────────────────────────
+  const category: MatchAnalysis["category"] =
+    hurt.length >= 2 || (hurt.length >= 1 && me.deaths >= 7)
+      ? "weak"
+      : hurt.length === 0 && solid.length >= 1
+        ? "strong"
+        : "mixed";
+
+  return {
+    category,
+    hurt: hurt.slice(0, 3),
+    solid: solid.slice(0, 3),
+    coaching,
+  };
+}
+
+/**
+ * @deprecated Use getMatchAnalysis for structured feedback.
+ * Kept for any callers that haven't migrated.
+ */
+export function getMatchPerformanceReasons(
+  match: MatchDTO,
+  me: MatchParticipant
+): MatchReason[] {
+  const analysis = getMatchAnalysis(match, me);
+  const reasons: MatchReason[] = [
+    ...analysis.solid.map((text) => ({ tone: "good" as const, text })),
+    ...analysis.hurt.map((text) => ({ tone: "bad" as const, text })),
+  ];
+  return reasons.slice(0, 4);
 }
 
 function dedupeBadges(badges: Badge[]) {

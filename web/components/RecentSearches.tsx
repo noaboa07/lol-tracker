@@ -33,7 +33,7 @@ export function RecentSearches({
   );
 
   return (
-    <div className="mt-6">
+    <div>
       {favorites.length > 0 && (
         <Section
           title="Favorites"
@@ -101,7 +101,7 @@ function Section({
           return (
             <div
               key={`${r.platform}-${r.gameName}-${r.tagLine}`}
-              className="group flex items-center gap-2 rounded-2xl border border-border/60 bg-card/70 pl-3 pr-1.5 py-1.5 text-sm shadow-[0_0_18px_-16px] shadow-black/80 transition-all hover:-translate-y-0.5 hover:border-primary/60 hover:bg-card"
+              className="group flex items-center gap-2 rounded-md border border-border/60 bg-card pl-3 pr-1.5 py-1.5 text-sm transition-colors hover:border-border"
             >
               <Link
                 href={`/summoner/${r.platform}/${encodeURIComponent(r.gameName)}-${encodeURIComponent(r.tagLine)}`}

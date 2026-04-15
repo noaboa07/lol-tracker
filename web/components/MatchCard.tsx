@@ -12,8 +12,8 @@ import { queueName } from "@/lib/queues";
 import { formatDuration, kdaRatio, timeAgo, cn } from "@/lib/utils";
 import {
   getMatchBadges,
+  getMatchAnalysis,
   damageShareForTeam,
-  getMatchPerformanceReasons,
 } from "@/lib/badges";
 import type { MatchDTO, MatchParticipant } from "@/lib/types";
 
@@ -38,7 +38,8 @@ export function MatchCard({
 
   const win = me.win;
   const totalCs = me.totalMinionsKilled + (me.neutralMinionsKilled ?? 0);
-  const cspm = (totalCs / (match.info.gameDuration / 60)).toFixed(1);
+  const gameMins = match.info.gameDuration / 60;
+  const cspm = gameMins > 0 ? (totalCs / gameMins).toFixed(1) : "0";
   const items = [me.item0, me.item1, me.item2, me.item3, me.item4, me.item5];
   const trinket = me.item6;
   const teams: [MatchParticipant[], MatchParticipant[]] = [
@@ -46,41 +47,36 @@ export function MatchCard({
     match.info.participants.filter((p) => p.teamId === 200),
   ];
   const badges = getMatchBadges(match, me);
-  const reasons = getMatchPerformanceReasons(match, me);
+  const analysis = getMatchAnalysis(match, me);
   const date = new Date(match.info.gameCreation);
   const dateAbs = date.toLocaleString();
-
   const teamDamageScale = damageShareForTeam(match.info.participants);
 
   return (
     <div
       className={cn(
-        "rounded-xl border overflow-hidden transition-all animate-fade-in focus-within:ring-2 focus-within:ring-ring/50",
+        // Left accent border signals win/loss at a glance
+        "rounded-lg border border-border border-l-2 bg-card overflow-hidden transition-colors focus-within:ring-1 focus-within:ring-ring/50",
         win
-          ? "border-win/40 bg-win/5 hover:bg-win/10 shadow-[0_0_24px_-12px] shadow-win/60"
-          : "border-loss/40 bg-loss/5 hover:bg-loss/10 shadow-[0_0_24px_-12px] shadow-loss/60"
+          ? "border-l-win hover:bg-win/[0.03]"
+          : "border-l-loss hover:bg-loss/[0.03]"
       )}
     >
-      <div className="grid grid-cols-[auto_1fr_auto] sm:grid-cols-[170px_auto_1fr_auto] gap-3 p-4 items-center">
-        <div className="flex flex-col gap-1 min-w-0">
-          <div
-            className={cn("text-sm font-bold", win ? "text-win" : "text-loss")}
-          >
+      {/* ── Summary row ───────────────────────────────────────────────────── */}
+      <div className="grid grid-cols-[auto_1fr_auto] sm:grid-cols-[160px_auto_1fr_auto] gap-3 px-4 py-3 items-center">
+
+        {/* Game metadata */}
+        <div className="flex flex-col gap-0.5 min-w-0">
+          <div className={cn("text-xs font-bold uppercase tracking-wide", win ? "text-win" : "text-loss")}>
+            {win ? "Victory" : "Defeat"}
+          </div>
+          <div className="text-xs font-medium text-foreground">
             {queueName(match.info.queueId)}
           </div>
-          <div
-            className="text-xs text-muted-foreground cursor-help"
-            title={dateAbs}
-          >
+          <div className="text-xs text-muted-foreground cursor-help" title={dateAbs}>
             {timeAgo(match.info.gameCreation)}
           </div>
-          <div className="text-xs text-muted-foreground">
-            <span
-              className={cn("font-semibold", win ? "text-win" : "text-loss")}
-            >
-              {win ? "Victory" : "Defeat"}
-            </span>
-            {" · "}
+          <div className="text-xs text-muted-foreground tabular-nums">
             {formatDuration(match.info.gameDuration)}
           </div>
           {badges.length > 0 && (
@@ -89,7 +85,7 @@ export function MatchCard({
                 <span
                   key={b.label}
                   className={cn(
-                    "text-[10px] font-bold px-1.5 py-0.5 rounded border tracking-wider",
+                    "text-[9px] font-bold px-1.5 py-0.5 rounded border tracking-wider",
                     b.className
                   )}
                 >
@@ -100,62 +96,64 @@ export function MatchCard({
           )}
         </div>
 
+        {/* Champion portrait + spells */}
         <div className="flex items-center gap-2">
           <div className="relative">
             <Image
               src={championSquareUrl(me.championName, version)}
               alt={me.championName}
-              width={72}
-              height={72}
+              width={64}
+              height={64}
               unoptimized
               className={cn(
-                "rounded-xl ring-2",
-                win ? "ring-win/60" : "ring-loss/60"
+                "rounded-lg ring-1",
+                win ? "ring-win/50" : "ring-loss/40"
               )}
               title={me.championName}
             />
-            <span className="absolute -bottom-1 -right-1 bg-background border border-border text-[10px] px-1.5 rounded-full font-bold">
+            <span className="absolute -bottom-1 -right-1 bg-background border border-border text-[9px] px-1 rounded-sm font-bold tabular-nums">
               {me.champLevel}
             </span>
           </div>
           <div className="flex flex-col gap-1">
-            {[me.summoner1Id, me.summoner2Id].map((sid, i) => {
-              const spell = spellMap[sid];
-              return (
-                <Image
-                  key={i}
-                  src={summonerSpellIconUrl(sid, version)}
-                  alt={spell?.name ?? `spell-${sid}`}
-                  title={spell?.name ?? `Spell ${sid}`}
-                  width={28}
-                  height={28}
-                  unoptimized
-                  className="rounded"
-                />
-              );
-            })}
+            {[me.summoner1Id, me.summoner2Id].map((sid, i) => (
+              <Image
+                key={i}
+                src={summonerSpellIconUrl(sid, version)}
+                alt={spellMap[sid]?.name ?? `spell-${sid}`}
+                title={spellMap[sid]?.name ?? `Spell ${sid}`}
+                width={24}
+                height={24}
+                unoptimized
+                className="rounded-sm"
+              />
+            ))}
           </div>
         </div>
 
+        {/* KDA + stats */}
         <div className="hidden sm:flex flex-col gap-0.5">
-          <div className="text-base font-bold">
-            {me.kills} <span className="text-muted-foreground">/</span>{" "}
+          <div className="text-base font-bold tabular-nums font-mono">
+            {me.kills}{" "}
+            <span className="text-muted-foreground font-normal">/</span>{" "}
             <span className="text-loss">{me.deaths}</span>{" "}
-            <span className="text-muted-foreground">/</span> {me.assists}
+            <span className="text-muted-foreground font-normal">/</span>{" "}
+            {me.assists}
           </div>
-          <div className="text-xs text-muted-foreground">
+          <div className="text-xs text-muted-foreground tabular-nums">
             {kdaRatio(me.kills, me.deaths, me.assists)} KDA
           </div>
-          <div className="text-xs text-muted-foreground">
-            {totalCs} CS ({cspm}/m) · {me.visionScore} vis
+          <div className="text-xs text-muted-foreground tabular-nums">
+            {totalCs} CS ({cspm}/m)
           </div>
-          <div className="text-xs text-muted-foreground">
+          <div className="text-xs text-muted-foreground tabular-nums">
             {me.totalDamageDealtToChampions.toLocaleString()} dmg
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          <div className="grid grid-cols-3 sm:grid-cols-7 gap-1">
+        {/* Items + expand toggle */}
+        <div className="flex items-center gap-2">
+          <div className="grid grid-cols-4 sm:grid-cols-7 gap-1">
             {items.map((id, i) => {
               const url = itemIconUrl(id, version);
               const name = id ? itemMap[id] : null;
@@ -163,14 +161,14 @@ export function MatchCard({
                 <div
                   key={i}
                   title={name ?? "Empty"}
-                  className="h-8 w-8 rounded-md bg-secondary/80 overflow-hidden border border-border/40"
+                  className="h-7 w-7 rounded-sm bg-secondary/60 overflow-hidden border border-border/40"
                 >
                   {url && (
                     <Image
                       src={url}
-                      alt={name ?? `item-${id}`}
-                      width={32}
-                      height={32}
+                      alt={name ?? ""}
+                      width={28}
+                      height={28}
                       unoptimized
                     />
                   )}
@@ -180,24 +178,24 @@ export function MatchCard({
             {trinket ? (
               <div
                 title={itemMap[trinket] ?? "Trinket"}
-                className="h-8 w-8 rounded-full bg-secondary/80 overflow-hidden border border-border/40"
+                className="h-7 w-7 rounded-full bg-secondary/60 overflow-hidden border border-border/40"
               >
                 <Image
                   src={itemIconUrl(trinket, version) ?? ""}
                   alt={itemMap[trinket] ?? "trinket"}
-                  width={32}
-                  height={32}
+                  width={28}
+                  height={28}
                   unoptimized
                 />
               </div>
             ) : (
-              <div className="h-8 w-8" />
+              <div className="h-7 w-7" />
             )}
           </div>
           <button
             onClick={() => setOpen((o) => !o)}
-            className="p-2 rounded-md hover:bg-secondary/60 transition-colors"
-            aria-label="Toggle details"
+            className="p-1.5 rounded-md hover:bg-secondary/60 transition-colors text-muted-foreground hover:text-foreground"
+            aria-label="Toggle match details"
           >
             <ChevronDown
               className={cn("h-4 w-4 transition-transform", open && "rotate-180")}
@@ -206,6 +204,7 @@ export function MatchCard({
         </div>
       </div>
 
+      {/* ── Expanded detail panel ───────────────────────────────────────────── */}
       <div
         className={cn(
           "grid overflow-hidden transition-[grid-template-rows,opacity] duration-300 ease-out",
@@ -213,31 +212,13 @@ export function MatchCard({
         )}
       >
         <div className="min-h-0">
-          <div className="border-t border-border/40 bg-background/40 p-4 space-y-4">
-            {reasons.length > 0 && (
-              <div className="rounded-xl border border-border/50 bg-background/30 p-4">
-                <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                  Why This Game {win ? "Went Well" : "Went Poorly"}
-                </div>
-                <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                  {reasons.map((reason) => (
-                    <div
-                      key={reason.text}
-                      className={cn(
-                        "rounded-lg border px-3 py-2 text-sm",
-                        reason.tone === "good"
-                          ? "border-win/30 bg-win/10 text-win"
-                          : "border-loss/30 bg-loss/10 text-loss"
-                      )}
-                    >
-                      {reason.text}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+          <div className="border-t border-border/60 bg-[hsl(var(--surface))] p-4 space-y-5">
 
-            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            {/* ── Coaching analysis ────────────────────────────────────── */}
+            <CoachingPanel analysis={analysis} win={win} />
+
+            {/* ── Team breakdown ───────────────────────────────────────── */}
+            <div className="grid gap-5 lg:grid-cols-2">
               {teams.map((team, ti) => (
                 <TeamPanel
                   key={ti}
@@ -257,6 +238,68 @@ export function MatchCard({
     </div>
   );
 }
+
+// ── Coaching panel ────────────────────────────────────────────────────────────
+
+function CoachingPanel({
+  analysis,
+  win,
+}: {
+  analysis: ReturnType<typeof getMatchAnalysis>;
+  win: boolean;
+}) {
+  if (analysis.hurt.length === 0 && analysis.solid.length === 0) return null;
+
+  return (
+    <div className="rounded-lg border border-border/70 bg-card p-4 space-y-4">
+      <div className="grid gap-4 sm:grid-cols-2">
+        {/* What hurt / What could be better */}
+        {analysis.hurt.length > 0 && (
+          <div>
+            <div className="eyebrow text-loss/70 mb-2">
+              {win ? "Watch out" : "What hurt"}
+            </div>
+            <ul className="space-y-1.5">
+              {analysis.hurt.map((text, i) => (
+                <li key={i} className="flex items-start gap-2 text-sm">
+                  <span className="text-loss mt-0.5 text-xs font-bold leading-none shrink-0">
+                    −
+                  </span>
+                  <span className="leading-snug">{text}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {/* What held up */}
+        {analysis.solid.length > 0 && (
+          <div>
+            <div className="eyebrow text-win/70 mb-2">What held up</div>
+            <ul className="space-y-1.5">
+              {analysis.solid.map((text, i) => (
+                <li key={i} className="flex items-start gap-2 text-sm">
+                  <span className="text-win mt-0.5 text-xs font-bold leading-none shrink-0">
+                    +
+                  </span>
+                  <span className="leading-snug">{text}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
+
+      {/* Single coaching note */}
+      <div className="border-t border-border/50 pt-3 text-sm text-muted-foreground">
+        <span className="font-semibold text-foreground">Focus: </span>
+        {analysis.coaching}
+      </div>
+    </div>
+  );
+}
+
+// ── Team panel ────────────────────────────────────────────────────────────────
 
 function TeamPanel({
   team,
@@ -280,16 +323,16 @@ function TeamPanel({
     <div>
       <div
         className={cn(
-          "flex items-center justify-between text-xs font-bold uppercase tracking-wider mb-2",
+          "flex items-center justify-between text-[10px] font-semibold uppercase tracking-wider mb-2",
           side === "blue" ? "text-win" : "text-loss"
         )}
       >
-        <span>{side === "blue" ? "Blue Team" : "Red Team"}</span>
-        <span className="text-muted-foreground font-medium normal-case">
+        <span>{side === "blue" ? "Blue" : "Red"} Team</span>
+        <span className="text-muted-foreground font-medium normal-case tracking-normal">
           {win ? "Victory" : "Defeat"}
         </span>
       </div>
-      <div className="space-y-1.5">
+      <div className="space-y-1">
         {team.map((p) => {
           const cs = p.totalMinionsKilled + (p.neutralMinionsKilled ?? 0);
           const isMe = p.puuid === puuid;
@@ -299,25 +342,26 @@ function TeamPanel({
               key={p.puuid}
               className={cn(
                 "grid grid-cols-[auto_1fr_auto] gap-2 items-center rounded-md px-2 py-1.5 text-xs",
-                isMe ? "bg-primary/10 ring-1 ring-primary/40" : "hover:bg-secondary/40"
+                isMe ? "bg-primary/10 ring-1 ring-primary/30" : "hover:bg-secondary/30"
               )}
             >
+              {/* Champion + spells */}
               <div className="flex items-center gap-1.5">
                 <Image
                   src={championSquareUrl(p.championName, version)}
                   alt={p.championName}
                   title={p.championName}
-                  width={28}
-                  height={28}
+                  width={26}
+                  height={26}
                   unoptimized
-                  className="rounded"
+                  className="rounded-sm"
                 />
                 <div className="flex flex-col gap-0.5">
                   <Image
                     src={summonerSpellIconUrl(p.summoner1Id, version)}
                     alt=""
-                    width={12}
-                    height={12}
+                    width={11}
+                    height={11}
                     unoptimized
                     title={spellMap[p.summoner1Id]?.name}
                     className="rounded-sm"
@@ -325,14 +369,16 @@ function TeamPanel({
                   <Image
                     src={summonerSpellIconUrl(p.summoner2Id, version)}
                     alt=""
-                    width={12}
-                    height={12}
+                    width={11}
+                    height={11}
                     unoptimized
                     title={spellMap[p.summoner2Id]?.name}
                     className="rounded-sm"
                   />
                 </div>
               </div>
+
+              {/* Name + damage bar */}
               <div className="min-w-0">
                 <div
                   className={cn(
@@ -342,29 +388,30 @@ function TeamPanel({
                 >
                   {p.riotIdGameName ?? p.summonerName}
                 </div>
-                <div className="mt-1 h-1.5 rounded-full bg-secondary/60 overflow-hidden">
+                <div className="mt-1 h-1 rounded-full bg-secondary/50 overflow-hidden">
                   <div
                     className={cn(
                       "h-full rounded-full",
-                      side === "blue"
-                        ? "bg-gradient-to-r from-sky-400 to-sky-600"
-                        : "bg-gradient-to-r from-rose-400 to-rose-600"
+                      side === "blue" ? "bg-win/60" : "bg-loss/60"
                     )}
                     style={{ width: `${dmgPct}%` }}
-                    title={`${p.totalDamageDealtToChampions.toLocaleString()} damage`}
+                    title={`${p.totalDamageDealtToChampions.toLocaleString()} dmg`}
                   />
                 </div>
               </div>
+
+              {/* Stats */}
               <div className="text-right tabular-nums">
                 <div className="font-mono font-semibold">
                   {p.kills}/{p.deaths}/{p.assists}
                 </div>
                 <div className="text-[10px] text-muted-foreground">
-                  {cs} cs ·{" "}
-                  {(p.totalDamageDealtToChampions / 1000).toFixed(1)}k
+                  {cs} cs · {(p.totalDamageDealtToChampions / 1000).toFixed(1)}k
                 </div>
               </div>
-              <div className="col-span-3 flex gap-0.5 mt-1">
+
+              {/* Items row */}
+              <div className="col-span-3 flex gap-0.5 mt-0.5">
                 {[p.item0, p.item1, p.item2, p.item3, p.item4, p.item5, p.item6].map(
                   (id, i) => {
                     const url = id ? itemIconUrl(id, version) : null;
@@ -373,16 +420,10 @@ function TeamPanel({
                       <div
                         key={i}
                         title={name ?? "Empty"}
-                        className="h-5 w-5 rounded bg-secondary/60 overflow-hidden border border-border/30"
+                        className="h-5 w-5 rounded-sm bg-secondary/50 overflow-hidden border border-border/30"
                       >
                         {url && (
-                          <Image
-                            src={url}
-                            alt=""
-                            width={20}
-                            height={20}
-                            unoptimized
-                          />
+                          <Image src={url} alt="" width={20} height={20} unoptimized />
                         )}
                       </div>
                     );

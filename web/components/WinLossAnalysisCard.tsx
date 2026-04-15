@@ -1,46 +1,46 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { WinLossComparison } from "@/lib/match-insights";
 
-export function WinLossAnalysisCard({
-  comparison,
-}: {
-  comparison: WinLossComparison;
-}) {
+export function WinLossAnalysisCard({ comparison }: { comparison: WinLossComparison }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Win vs Loss Analysis</CardTitle>
-        <div className="text-sm text-muted-foreground">
-          What shifts most between your visible wins and losses.
-        </div>
+        <CardTitle>Win vs loss</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-3">
+      <CardContent>
         {comparison.metrics.length === 0 ? (
-          <div className="rounded-lg border border-dashed border-border/50 bg-background/20 p-4 text-sm text-muted-foreground">
-            Need both wins and losses in the current view to compare patterns.
-          </div>
+          <p className="text-sm text-muted-foreground">
+            Need both wins and losses in the current view to compare.
+          </p>
         ) : (
-          comparison.metrics.map((metric) => (
-            <div
-              key={metric.label}
-              className="grid grid-cols-[1fr_auto_auto] gap-3 rounded-lg border border-border/50 bg-background/20 p-3"
-            >
-              <div>
-                <div className="font-medium">{metric.label}</div>
-                {metric.emphasis && (
-                  <div className="text-xs text-muted-foreground mt-0.5">{metric.emphasis}</div>
-                )}
-              </div>
-              <div className="text-right">
-                <div className="text-xs uppercase tracking-wider text-muted-foreground">Wins</div>
-                <div className="font-semibold text-win">{metric.winValue}</div>
-              </div>
-              <div className="text-right">
-                <div className="text-xs uppercase tracking-wider text-muted-foreground">Losses</div>
-                <div className="font-semibold text-loss">{metric.lossValue}</div>
-              </div>
+          <>
+            <div className="mb-1 grid grid-cols-[1fr_auto_auto] gap-4 pb-1 border-b border-border/50">
+              <span className="eyebrow">Metric</span>
+              <span className="eyebrow w-12 text-right text-win/70">W</span>
+              <span className="eyebrow w-12 text-right text-loss/70">L</span>
             </div>
-          ))
+            <ul className="divide-y divide-border/40">
+              {comparison.metrics.map((metric) => (
+                <li
+                  key={metric.label}
+                  className="grid grid-cols-[1fr_auto_auto] items-baseline gap-4 py-2"
+                >
+                  <div>
+                    <div className="text-sm">{metric.label}</div>
+                    {metric.emphasis && (
+                      <div className="text-xs text-muted-foreground">{metric.emphasis}</div>
+                    )}
+                  </div>
+                  <div className="w-12 text-right font-mono text-sm font-semibold tabular-nums text-win">
+                    {metric.winValue}
+                  </div>
+                  <div className="w-12 text-right font-mono text-sm font-semibold tabular-nums text-loss">
+                    {metric.lossValue}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </>
         )}
       </CardContent>
     </Card>

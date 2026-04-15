@@ -58,18 +58,18 @@ export function ChampionStats({
 
   return (
     <Card>
-      <CardHeader className="flex-row items-center justify-between space-y-0">
-        <CardTitle>Champion Stats</CardTitle>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0">
+        <CardTitle>Champions</CardTitle>
         {selected && (
           <button
             onClick={() => onSelect(null)}
-            className="text-[10px] uppercase tracking-wider text-muted-foreground hover:text-foreground flex items-center gap-1"
+            className="text-[10px] uppercase tracking-wider text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors"
           >
-            <X className="h-3 w-3" /> Clear filter
+            <X className="h-3 w-3" /> Clear
           </button>
         )}
       </CardHeader>
-      <CardContent className="space-y-1">
+      <CardContent className="space-y-0.5">
         {stats.map((s) => {
           const wr = Math.round((s.wins / s.games) * 100);
           const isActive = selected === s.championName;

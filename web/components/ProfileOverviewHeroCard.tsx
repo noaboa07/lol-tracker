@@ -1,5 +1,3 @@
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
 import type { ProfileOverviewSummary } from "@/lib/match-insights";
 import type { RankedEntry } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -12,76 +10,88 @@ export function ProfileOverviewHeroCard({
   solo?: RankedEntry;
 }) {
   const rankLabel = solo
-    ? `${solo.tier} ${solo.rank} - ${solo.leaguePoints} LP`
+    ? `${solo.tier[0] + solo.tier.slice(1).toLowerCase()} ${solo.rank} · ${solo.leaguePoints} LP`
     : "Unranked";
 
   return (
-    <Card className="overflow-hidden border-primary/20 bg-gradient-to-br from-card via-card to-primary/5">
-      <CardContent className="p-5 sm:p-6">
-        <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-          <div className="max-w-2xl">
-            <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs uppercase tracking-[0.18em] text-primary">
-              Profile Overview
-            </div>
-            <div className="mt-4 text-2xl font-semibold tracking-tight sm:text-3xl">
-              {summary.summaryLine}
-            </div>
-            <div className="mt-3 flex flex-wrap gap-2">
-              <Badge className="border-border/60 bg-background/30 text-foreground">
-                Rank: {rankLabel}
-              </Badge>
-              {summary.strongestQueue && (
-                <Badge className="border-border/60 bg-background/30 text-foreground">
-                  Best queue: {summary.strongestQueue}
-                </Badge>
-              )}
-              {summary.strongestRole && (
-                <Badge className="border-border/60 bg-background/30 text-foreground">
-                  Strong role: {summary.strongestRole}
-                </Badge>
-              )}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <HeroMetric
-              label="Recent WR"
-              value={`${summary.recentWinRate}%`}
-              accent={summary.recentWinRate >= 50}
-            />
-            <HeroMetric
-              label="Avg KDA"
-              value={summary.averageKda.toFixed(2)}
-              accent={summary.averageKda >= 3}
-            />
-            <HeroMetric
-              label="Best Champ"
-              value={summary.bestChampion?.championName ?? "None"}
-            />
-            <HeroMetric
-              label="Comfort"
-              value={summary.bestChampion ? `${summary.bestChampion.games} games` : "Building"}
-            />
+    <section className="rounded-lg border border-border/70 bg-card">
+      <div className="grid gap-6 p-5 sm:p-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
+        <div className="max-w-2xl">
+          <div className="eyebrow">Overview</div>
+          <p className="mt-2 text-xl font-semibold tracking-tight sm:text-2xl">
+            {summary.summaryLine}
+          </p>
+          <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
+            <span>{rankLabel}</span>
+            {summary.strongestQueue && (
+              <>
+                <span className="text-border">·</span>
+                <span>Best in {summary.strongestQueue}</span>
+              </>
+            )}
+            {summary.strongestRole && (
+              <>
+                <span className="text-border">·</span>
+                <span>Leans {summary.strongestRole}</span>
+              </>
+            )}
           </div>
         </div>
-      </CardContent>
-    </Card>
+
+        <dl className="flex items-center divide-x divide-border/60 rounded-md border border-border/60 bg-background/40">
+          <HeroMetric
+            label="Recent WR"
+            value={`${summary.recentWinRate}%`}
+            tone={summary.recentWinRate >= 50 ? "win" : "loss"}
+          />
+          <HeroMetric
+            label="Avg KDA"
+            value={summary.averageKda.toFixed(2)}
+            tone={summary.averageKda >= 3 ? "win" : undefined}
+          />
+          <HeroMetric
+            label="Best champ"
+            value={summary.bestChampion?.championName ?? "—"}
+            sub={
+              summary.bestChampion
+                ? `${summary.bestChampion.games}g`
+                : undefined
+            }
+          />
+        </dl>
+      </div>
+    </section>
   );
 }
 
 function HeroMetric({
   label,
   value,
-  accent = false,
+  sub,
+  tone,
 }: {
   label: string;
   value: string;
-  accent?: boolean;
+  sub?: string;
+  tone?: "win" | "loss";
 }) {
   return (
-    <div className="rounded-xl border border-border/50 bg-background/30 p-3">
-      <div className="text-[11px] uppercase tracking-wider text-muted-foreground">{label}</div>
-      <div className={cn("mt-1 text-base font-semibold", accent && "text-foreground")}>{value}</div>
+    <div className="min-w-[96px] px-4 py-3 text-left">
+      <dt className="eyebrow">{label}</dt>
+      <dd
+        className={cn(
+          "mt-1 font-mono tabular-nums text-lg font-semibold",
+          tone === "win" && "text-win",
+          tone === "loss" && "text-loss"
+        )}
+      >
+        {value}
+        {sub && (
+          <span className="ml-1 text-xs font-normal text-muted-foreground">
+            {sub}
+          </span>
+        )}
+      </dd>
     </div>
   );
 }

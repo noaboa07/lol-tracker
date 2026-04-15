@@ -1,13 +1,9 @@
 import { notFound } from "next/navigation";
 import { FavoriteSummonerButton } from "@/components/FavoriteSummonerButton";
-import { ProfileOverviewHeroCard } from "@/components/ProfileOverviewHeroCard";
-import { ProfileHeader } from "@/components/ProfileHeader";
-import { RankCard } from "@/components/RankCard";
-import { CompareSummonersCard } from "@/components/CompareSummonersCard";
+import { ProfileModule } from "@/components/ProfileModule";
 import { LiveGameBanner } from "@/components/LiveGameBanner";
 import { RecentSearches } from "@/components/RecentSearches";
 import { SearchBar } from "@/components/SearchBar";
-import { ShareProfileSnapshotCard } from "@/components/ShareProfileSnapshotCard";
 import { MatchHistory } from "./MatchHistory";
 import {
   getChampionIdMap,
@@ -76,12 +72,7 @@ async function loadLiveGameSummary(
   puuid: string,
   encryptedSummonerId?: string
 ): Promise<LiveGameSummary | null> {
-  if (!encryptedSummonerId) {
-    console.warn(
-      `[summoner-page] spectator skipped for ${platform}/${puuid}: missing summoner.id`
-    );
-    return null;
-  }
+  if (!encryptedSummonerId) return null;
 
   const game = await getActiveGame(encryptedSummonerId, platform);
   if (!game) return null;
@@ -123,7 +114,7 @@ export default async function SummonerPage({ params }: PageProps) {
     return (
       <div className="max-w-2xl mx-auto">
         <SearchBar />
-        <div className="mt-8 rounded-xl border border-loss/30 bg-loss/10 p-6 text-center">
+        <div className="mt-8 rounded-lg border border-loss/30 bg-loss/10 p-6 text-center">
           <div className="text-loss font-semibold">Couldn't load profile</div>
           <div className="text-sm text-muted-foreground mt-1">{friendlyMessage}</div>
         </div>
@@ -149,52 +140,49 @@ export default async function SummonerPage({ params }: PageProps) {
 
   return (
     <div className="space-y-6">
-      <SearchBar size="sm" />
-      <RecentSearches
-        compareBasePath={`/summoner/${platform}/${params.riotId}`}
-        currentProfile={{
-          platform,
-          gameName: result.account.gameName,
-          tagLine: result.account.tagLine,
-        }}
-      />
-
-      <div className="flex items-center justify-between gap-4 flex-wrap">
-        <div className="flex-1 min-w-0">
-          <ProfileHeader profile={result} version={version} />
-        </div>
-        <FavoriteSummonerButton
-          platform={platform}
-          gameName={result.account.gameName}
-          tagLine={result.account.tagLine}
+      {/* Navigation aids — search + recents */}
+      <div className="space-y-3">
+        <SearchBar size="sm" />
+        <RecentSearches
+          compareBasePath={`/summoner/${platform}/${params.riotId}`}
+          currentProfile={{
+            platform,
+            gameName: result.account.gameName,
+            tagLine: result.account.tagLine,
+          }}
         />
       </div>
 
-      <ProfileOverviewHeroCard summary={overview} solo={solo} />
-
-      <LiveGameBanner
-        initialGame={liveGame}
-        platform={platform}
-        puuid={puuid}
-        version={version}
-      />
-
-      <div className="grid lg:grid-cols-3 gap-4">
-        <div className="lg:col-span-2 flex flex-col sm:flex-row gap-4">
-          <RankCard queue="RANKED_SOLO_5x5" entry={solo} />
-          <RankCard queue="RANKED_FLEX_SR" entry={flex} />
+      {/* Profile identity + rank + overview — one unified block */}
+      <div className="space-y-2">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex-1 min-w-0">
+            <ProfileModule
+              profile={result}
+              solo={solo}
+              flex={flex}
+              overview={overview}
+              version={version}
+            />
+          </div>
+          <div className="pt-1">
+            <FavoriteSummonerButton
+              platform={platform}
+              gameName={result.account.gameName}
+              tagLine={result.account.tagLine}
+            />
+          </div>
         </div>
-      </div>
-
-      <div id="compare" className="grid gap-6 xl:grid-cols-[minmax(0,1.3fr)_minmax(320px,0.7fr)]">
-        <CompareSummonersCard
-          currentProfile={result}
-          currentMatches={matches}
+        {/* Live game banner attaches visually below the profile card */}
+        <LiveGameBanner
+          initialGame={liveGame}
+          platform={platform}
+          puuid={puuid}
           version={version}
         />
-        <ShareProfileSnapshotCard profile={result} summary={overview} />
       </div>
 
+      {/* Main content — match history is the primary body */}
       <MatchHistory
         matches={matches}
         puuid={puuid}
@@ -202,6 +190,7 @@ export default async function SummonerPage({ params }: PageProps) {
         spellMap={spellMap}
         itemMap={itemMap}
         platform={platform}
+        currentProfile={result}
       />
     </div>
   );
