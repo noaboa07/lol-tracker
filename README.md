@@ -1,4 +1,4 @@
-# LoL.tracker
+# Morello
 
 A full-stack League of Legends stats and scouting app built with Next.js 14, TypeScript, and the Riot Games API.
 
