@@ -1,28 +1,35 @@
 import type { Metadata } from "next";
+import { Inter } from "next/font/google";
 import "./globals.css";
 import { QueryProvider } from "@/providers/QueryProvider";
 import { Navbar } from "@/components/Navbar";
 
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+  display: "swap",
+});
+
 export const metadata: Metadata = {
   title: {
-    default: "LoL.tracker | League of Legends Stats & Match Insights",
-    template: "%s | LoL.tracker",
+    default: "Morello | League of Legends Performance Analytics",
+    template: "%s | Morello",
   },
   description:
-    "A polished League of Legends stats app with live game tracking, match explainability, champion insights, and portfolio-ready product polish.",
-  applicationName: "LoL.tracker",
+    "Search any Riot ID to explore ranked history, live games, match breakdowns, champion trends, and coaching-level analytics.",
+  applicationName: "Morello",
   openGraph: {
-    title: "LoL.tracker",
+    title: "Morello",
     description:
-      "Search any Riot ID and explore live games, ranked history, match insights, and polished analytics.",
-    siteName: "LoL.tracker",
+      "Search any Riot ID to explore ranked history, live games, match breakdowns, and champion analytics.",
+    siteName: "Morello",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "LoL.tracker",
+    title: "Morello",
     description:
-      "League of Legends stats, live game tracking, and explainable match insights.",
+      "League of Legends performance analytics — ranked stats, live game detection, and explainable match insights.",
   },
 };
 
@@ -32,13 +39,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en" className={`dark ${inter.variable}`}>
       <body className="antialiased">
         <QueryProvider>
           <Navbar />
           <main className="container py-8 sm:py-10">{children}</main>
           <footer className="container pb-10 pt-2 text-center text-xs text-muted-foreground">
-            LoL.tracker isn&apos;t endorsed by Riot Games. League of Legends is a
+            Morello isn&apos;t endorsed by Riot Games. League of Legends is a
             trademark of Riot Games, Inc.
           </footer>
         </QueryProvider>

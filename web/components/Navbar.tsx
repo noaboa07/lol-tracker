@@ -9,9 +9,8 @@ export function Navbar() {
           href="/"
           className="flex items-center gap-2.5 font-semibold tracking-tight text-foreground"
         >
-          {/* Wordmark — no decorative icon, just text with accent */}
-          <span className="text-sm">
-            LoL<span className="text-primary">.tracker</span>
+          <span className="text-sm font-semibold tracking-tight">
+            Morell<span className="text-primary">o</span>
           </span>
         </Link>
 

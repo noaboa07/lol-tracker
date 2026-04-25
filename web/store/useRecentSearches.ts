@@ -70,6 +70,6 @@ export const useRecentSearches = create<State>()(
         }),
       clear: () => set({ recents: [], favorites: [] }),
     }),
-    { name: "lol-tracker-recents" }
+    { name: "morello-recents" }
   )
 );
